@@ -1,0 +1,67 @@
+import org.apache.commons.io.FileUtils
+
+buildscript {
+	repositories {
+		jcenter()
+	}
+	
+	dependencies {
+		classpath 'commons-io:commons-io:2.4'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+final int NUMBER_OF_TESTS = 1
+
+def createTestTask(int testNumber, String testName, String mainClass, String inputFile, String processFile, String outputFile, String expectedOutputFile) {
+	Task testTask = task("test${testName}${testNumber}") << {
+		File output = file("test/${outputFile}${testNumber}.txt")
+		if (output.exists()) {
+			output.delete()
+		}
+		
+		Process process = new ProcessBuilder('java', '-cp', "${jar.archivePath}", mainClass, "test/${inputFile}${testNumber}.txt", "test/${processFile}${testNumber}.txt", "test/${outputFile}${testNumber}.txt").inheritIO().directory(file('.')).start()
+		int exitCode = process.waitFor()
+		if (exitCode != 0) {
+			println "Test failed, process exited with exitcode ${exitCode}"
+		} else if (!FileUtils.contentEquals(output, file("test/${expectedOutputFile}${testNumber}.txt"))) {
+			println 'Test failed, output file contents did not match the expected file contents'
+		} else {
+			println 'Test successful'
+		}
+	}
+	testTask.dependsOn jar
+	return testTask
+}
+
+def createTestDiffTask(int testNumber) {
+	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.diamond.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch')
+}
+
+def createTestPatchTask(int testNumber) {
+	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.diamond.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work')
+}
+
+task testAllDiff
+task testAllPatch
+task testAll
+testAll.dependsOn testAllDiff
+testAll.dependsOn testAllPatch
+test.dependsOn testAll
+
+for (int i = 1; i <= NUMBER_OF_TESTS; i++) {
+	testAllDiff.dependsOn createTestDiffTask(i)
+	testAllPatch.dependsOn createTestPatchTask(i)
+}
+
+archivesBaseName = 'diamonddiff'
+group = 'net.earthcomputer.diamond'
+version = '1.0'
+
+jar {
+	manifest {
+		attributes 'Main-Class': 'net.earthcomputer.diamond.diff.DiffFinder'
+	}
+}

@@ -1,0 +1,7 @@
+Added header
+Hello world!
+This line is not capitalized. This will have to change.
+This line separates the above line from a below deletion.
+This line is another separator.
+Line 1
+Line 2

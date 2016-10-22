@@ -1,0 +1,6 @@
+Hello world!
+this line is not capitalized. This will have to change.
+This line separates the above line from a below deletion.
+This line violates the DRY principle and will be deleted.
+This line is another separator.
+This line will be replaced by two lines.
