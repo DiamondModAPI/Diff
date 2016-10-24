@@ -1,4 +1,4 @@
-package net.earthcomputer.diamond.diff;
+package net.earthcomputer.meme.diff;
 
 import java.io.File;
 import java.io.InputStream;
@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import net.earthcomputer.diamond.diff.Patch.Addition;
-import net.earthcomputer.diamond.diff.Patch.Deletion;
+import net.earthcomputer.meme.diff.Patch.Addition;
+import net.earthcomputer.meme.diff.Patch.Deletion;
 
 public class DiffFinder {
 
@@ -21,7 +21,7 @@ public class DiffFinder {
 
 	public static void main(String[] args) {
 		if (args.length != 3) {
-			System.err.println("java -jar diamonddiff.jar <base-file> <work-file> <output-patch-file>");
+			System.err.println("java -jar memediff.jar <base-file> <work-file> <output-patch-file>");
 			System.exit(1);
 			return;
 		}
@@ -69,7 +69,7 @@ public class DiffFinder {
 		Addition addition = additionItr.hasNext() ? additionItr.next() : null;
 		Deletion deletion = deletionItr.hasNext() ? deletionItr.next() : null;
 
-		output.println("diamond-diff version " + VERSION);
+		output.println("meme-diff version " + VERSION);
 
 		int prevStart = -1;
 		while (addition != null || deletion != null) {

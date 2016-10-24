@@ -37,11 +37,11 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 }
 
 def createTestDiffTask(int testNumber) {
-	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.diamond.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch')
+	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch')
 }
 
 def createTestPatchTask(int testNumber) {
-	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.diamond.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work')
+	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.meme.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work')
 }
 
 task testAllDiff
@@ -56,12 +56,12 @@ for (int i = 1; i <= NUMBER_OF_TESTS; i++) {
 	testAllPatch.dependsOn createTestPatchTask(i)
 }
 
-archivesBaseName = 'diamonddiff'
-group = 'net.earthcomputer.diamond'
+archivesBaseName = 'memediff'
+group = 'net.earthcomputer.meme'
 version = '1.0'
 
 jar {
 	manifest {
-		attributes 'Main-Class': 'net.earthcomputer.diamond.diff.DiffFinder'
+		attributes 'Main-Class': 'net.earthcomputer.meme.diff.DiffFinder'
 	}
 }

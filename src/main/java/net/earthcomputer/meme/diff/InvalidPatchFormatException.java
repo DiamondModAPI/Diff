@@ -1,4 +1,4 @@
-package net.earthcomputer.diamond.diff;
+package net.earthcomputer.meme.diff;
 
 public class InvalidPatchFormatException extends Exception {
 

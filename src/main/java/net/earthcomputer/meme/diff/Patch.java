@@ -1,4 +1,4 @@
-package net.earthcomputer.diamond.diff;
+package net.earthcomputer.meme.diff;
 
 import java.util.ArrayList;
 import java.util.Collections;

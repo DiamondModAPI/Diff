@@ -1,4 +1,4 @@
-package net.earthcomputer.diamond.diff;
+package net.earthcomputer.meme.diff;
 
 import java.io.File;
 import java.io.InputStream;
@@ -13,15 +13,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.earthcomputer.diamond.diff.Patch.Addition;
-import net.earthcomputer.diamond.diff.Patch.Deletion;
+import net.earthcomputer.meme.diff.Patch.Addition;
+import net.earthcomputer.meme.diff.Patch.Deletion;
 
 public class Patcher {
 
 	public static void main(String[] args) {
 		if (args.length != 3) {
 			System.err.println(
-					"java -cp diamonddiff.jar net.earthcomputer.diamond.diff.Patcher <base-file> <patch-file> <output-work-file>");
+					"java -cp memediff.jar net.earthcomputer.diamond.diff.Patcher <base-file> <patch-file> <output-work-file>");
 			System.exit(1);
 			return;
 		}
@@ -61,7 +61,7 @@ public class Patcher {
 	private final Patch patch;
 	private final PrintWriter output;
 
-	private static final Pattern HEADER_PATTERN = Pattern.compile("\\s*diamond-diff\\s+version\\s+(\\d+)\\s*");
+	private static final Pattern HEADER_PATTERN = Pattern.compile("\\s*meme-diff\\s+version\\s+(\\d+)\\s*");
 	private static final Pattern DELETION_PATTERN = Pattern.compile("\\s*!delete\\s+(\\d+)\\s*,\\s*(\\d+)\\s*");
 	private static final Pattern ADDITION_PATTERN = Pattern.compile("\\s*!add\\s+(\\d+)\\s*,\\s*(\\d+)\\s*");
 
