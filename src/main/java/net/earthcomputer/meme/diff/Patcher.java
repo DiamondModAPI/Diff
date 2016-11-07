@@ -4,19 +4,19 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
-public class Patcher {
+public class Patcher<T> {
 
 	public static void main(String[] args) {
 		if (args.length != 3) {
@@ -48,7 +48,7 @@ public class Patcher {
 		}
 
 		try {
-			new Patcher.Builder().setBaseFile(baseFile).setPatchFile(patchFile).setOutputFile(workFile).build()
+			new Patcher.Builder<Object>().setPatchFile(patchFile).setBaseFile(baseFile).setOutputFile(workFile).build()
 					.writeWorkFile();
 		} catch (InvalidPatchFormatException e) {
 			System.err.println("The patch file had invalid format: " + e.getMessage());
@@ -57,46 +57,43 @@ public class Patcher {
 		}
 	}
 
-	private final List<String> baseLines;
-	private final Patch patch;
+	private final IDiffFormat<T> format;
+	private final List<T> baseLines;
+	private final Patch<T> patch;
 	private final PrintWriter output;
 
 	private static final Pattern HEADER_PATTERN = Pattern.compile("\\s*meme-diff\\s+version\\s+(\\d+)\\s*");
+	private static final Pattern DIFF_FORMAT_PATTERN = Pattern.compile("\\s*format\\s+(\\w+)\\s*");
 	private static final Pattern DELETION_PATTERN = Pattern.compile("\\s*!delete\\s+(\\d+)\\s*,\\s*(\\d+)\\s*");
 	private static final Pattern ADDITION_PATTERN = Pattern.compile("\\s*!add\\s+(\\d+)\\s*,\\s*(\\d+)\\s*");
 
-	private Patcher(List<String> baseLines, Patch patch, PrintWriter output) {
+	private Patcher(IDiffFormat<T> format, List<T> baseLines, Patch<T> patch, PrintWriter output) {
+		this.format = format;
 		this.baseLines = baseLines;
 		this.patch = patch;
 		this.output = output;
 	}
 
 	public void writeWorkFile() {
-		List<String> workLines = computeWorkFile();
+		List<T> workLines = computeWorkFile();
 
-		for (int i = 0; i < workLines.size(); i++) {
-			String line = workLines.get(i);
-			if (i != workLines.size() - 1) {
-				output.println(line);
-			} else {
-				output.print(line);
-			}
-		}
+		format.printElements(workLines, output);
 
 		output.flush();
+		output.close();
 	}
 
-	public List<String> computeWorkFile() {
-		List<String> workLines = new ArrayList<String>(baseLines);
+	public List<T> computeWorkFile() {
+		List<T> workLines = new ArrayList<T>(baseLines);
 
-		List<Addition> additions = patch.getAdditions();
-		List<Deletion> deletions = patch.getDeletions();
+		List<Addition<T>> additions = patch.getAdditions();
+		List<Deletion<T>> deletions = patch.getDeletions();
 		int additionIndex = additions.size() - 1;
 		int deletionIndex = deletions.size() - 1;
-		Deletion lastDeletion = new Deletion(-1, -1);
+		Deletion<T> lastDeletion = new Deletion<T>(-1, -1);
 		while (additionIndex >= 0 || deletionIndex >= 0) {
-			Addition addition = additionIndex >= 0 ? additions.get(additionIndex) : null;
-			Deletion deletion = deletionIndex >= 0 ? deletions.get(deletionIndex) : null;
+			Addition<T> addition = additionIndex >= 0 ? additions.get(additionIndex) : null;
+			Deletion<T> deletion = deletionIndex >= 0 ? deletions.get(deletionIndex) : null;
 			boolean deletionFirst;
 			if (addition == null) {
 				deletionFirst = true;
@@ -126,109 +123,135 @@ public class Patcher {
 		return workLines;
 	}
 
-	public static Patch readPatch(Reader reader) throws InvalidPatchFormatException {
-		Patch patch = new Patch();
-		List<String> lines = Utils.getLinesFromReader(reader);
+	public static <T> PatchInfo<T> readPatch(Reader reader) throws InvalidPatchFormatException {
+		PatchInfo<T> patchInfo = new PatchInfo<T>();
+		patchInfo.patch = new Patch<T>();
+		Scanner scanner = new Scanner(reader);
 
 		try {
-			Matcher headerMatcher = HEADER_PATTERN.matcher(lines.get(0));
+			String header = scanner.nextLine();
+			Matcher headerMatcher = HEADER_PATTERN.matcher(header);
 			if (!headerMatcher.matches()) {
-				throw new InvalidPatchFormatException("Invalid header \"" + lines.get(0) + "\"");
+				throw new InvalidPatchFormatException("Invalid header \"" + header + "\"");
 			}
 			int patchVersion = Integer.parseInt(headerMatcher.group(1));
 
 			switch (patchVersion) {
 			case 0:
-				return readPatchVersion0(patch, lines);
+				return readPatchVersion0(patchInfo, scanner);
 			default:
 				throw new InvalidPatchFormatException("Unsupported patch file version: " + patchVersion);
 			}
-		} catch (IndexOutOfBoundsException e) {
+		} catch (NoSuchElementException e) {
 			throw new InvalidPatchFormatException("Reached the end of the file unexpectedly");
+		} catch (Exception e) {
+			throw new InvalidPatchFormatException("Miscellaneous error");
+		} finally {
+			scanner.close();
 		}
 	}
 
-	private static Patch readPatchVersion0(Patch patch, List<String> lines) {
-		for (int index = 1; index < lines.size(); index++) {
-			String line = lines.get(index);
+	@SuppressWarnings("unchecked")
+	private static <T> PatchInfo<T> readPatchVersion0(PatchInfo<T> patchInfo, Scanner scanner)
+			throws InvalidPatchFormatException {
+		String formatLine = scanner.nextLine();
+		Matcher formatMatcher = DIFF_FORMAT_PATTERN.matcher(formatLine);
+		if (!formatMatcher.matches()) {
+			throw new InvalidPatchFormatException("Invalid format line: \"" + formatLine + "\"");
+		}
+		patchInfo.format = (IDiffFormat<T>) DiffFormats.getByName(formatMatcher.group(1));
+		if (patchInfo.format == null) {
+			throw new InvalidPatchFormatException("Unrecognized format: \"" + formatMatcher.group(1) + "\"");
+		}
+		while (scanner.hasNextLine()) {
+			String line = scanner.nextLine();
 			Matcher matcher = DELETION_PATTERN.matcher(line);
 			if (matcher.matches()) {
-				patch.addDeletion(new Deletion(Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))));
+				patchInfo.patch.addDeletion(
+						new Deletion<T>(Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))));
 			} else {
 				matcher = ADDITION_PATTERN.matcher(line);
 				if (matcher.matches()) {
 					int additionLength = Integer.parseInt(matcher.group(2));
 
-					List<String> addedLines = new ArrayList<String>(additionLength);
-					for (int i = 0; i < additionLength; i++) {
-						addedLines.add(lines.get(++index));
-					}
+					List<T> addedLines = patchInfo.format.readElements(scanner, additionLength);
 
-					patch.addAddition(new Addition(addedLines, Integer.parseInt(matcher.group(1)), additionLength));
+					patchInfo.patch.addAddition(
+							new Addition<T>(addedLines, Integer.parseInt(matcher.group(1)), additionLength));
 				}
 			}
 		}
 
-		return patch;
+		return patchInfo;
 	}
 
-	public static class Builder {
-		private List<String> baseLines;
-		private Patch patch;
+	private static class PatchInfo<T> {
+		private Patch<T> patch;
+		private IDiffFormat<T> format;
+	}
+
+	public static class Builder<T> {
+		private IDiffFormat<T> format;
+		private List<T> baseLines;
+		private Patch<T> patch;
 		private PrintWriter output;
 
-		public Builder setBaseLines(List<String> baseLines) {
+		public Builder<T> setDiffFormat(IDiffFormat<T> format) {
+			this.format = format;
+			return this;
+		}
+
+		public Builder<T> setBaseLines(List<T> baseLines) {
 			this.baseLines = baseLines;
 			return this;
 		}
 
-		public Builder setBaseReader(Reader reader) {
-			return setBaseLines(Utils.getLinesFromReader(reader));
+		public Builder<T> setBaseInputStream(InputStream inputStream) {
+			if (format == null) {
+				throw new IllegalStateException("Cannot read base file before setting format");
+			}
+			return setBaseLines(format.readElements(new Scanner(inputStream), -1));
 		}
 
-		public Builder setBaseInputStream(InputStream inputStream) {
-			return setBaseReader(new InputStreamReader(inputStream));
+		public Builder<T> setBaseFile(File file) {
+			return setBaseInputStream(Utils.getFileInputStream(file));
 		}
 
-		public Builder setBaseFile(File file) {
-			return setBaseReader(Utils.getFileReader(file));
-		}
-
-		public Builder setPatch(Patch patch) {
+		public Builder<T> setPatch(Patch<T> patch) {
 			this.patch = patch;
 			return this;
 		}
 
-		public Builder setPatchReader(Reader reader) throws InvalidPatchFormatException {
-			return setPatch(readPatch(reader));
+		public Builder<T> setPatchReader(Reader reader) throws InvalidPatchFormatException {
+			PatchInfo<T> patchInfo = readPatch(reader);
+			return setPatch(patchInfo.patch).setDiffFormat(patchInfo.format);
 		}
 
-		public Builder setPatchInputStream(InputStream inputStream) throws InvalidPatchFormatException {
+		public Builder<T> setPatchInputStream(InputStream inputStream) throws InvalidPatchFormatException {
 			return setPatchReader(new InputStreamReader(inputStream));
 		}
 
-		public Builder setPatchFile(File file) throws InvalidPatchFormatException {
-			return setPatchReader(Utils.getFileReader(file));
+		public Builder<T> setPatchFile(File file) throws InvalidPatchFormatException {
+			return setPatchInputStream(Utils.getFileInputStream(file));
 		}
 
-		public Builder setOutput(PrintWriter output) {
+		public Builder<T> setOutput(PrintWriter output) {
 			this.output = output;
 			return this;
 		}
 
-		public Builder setOutputWriter(Writer writer) {
-			return setOutput(new PrintWriter(writer));
+		public Builder<T> setOutputStream(OutputStream outputStream) {
+			return setOutput(new PrintWriter(outputStream));
 		}
 
-		public Builder setOutputStream(OutputStream outputStream) {
-			return setOutputWriter(new OutputStreamWriter(outputStream));
+		public Builder<T> setOutputFile(File outputFile) {
+			return setOutputStream(Utils.getFileOutputStream(outputFile));
 		}
 
-		public Builder setOutputFile(File outputFile) {
-			return setOutputWriter(Utils.getFileWriter(outputFile));
-		}
-
-		public Patcher build() {
+		public Patcher<T> build() {
+			if (format == null) {
+				throw new IllegalStateException("format == null");
+			}
 			if (baseLines == null) {
 				throw new IllegalStateException("baseLines == null");
 			}
@@ -238,7 +261,7 @@ public class Patcher {
 			if (output == null) {
 				throw new IllegalStateException("output == null");
 			}
-			return new Patcher(baseLines, patch, output);
+			return new Patcher<T>(format, baseLines, patch, output);
 		}
 	}
 

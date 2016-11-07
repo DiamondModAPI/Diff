@@ -4,28 +4,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Patch {
+public class Patch<T> {
 
-	private List<Addition> additions = new ArrayList<Addition>();
-	private List<Deletion> deletions = new ArrayList<Deletion>();
+	private List<Addition<T>> additions = new ArrayList<Addition<T>>();
+	private List<Deletion<T>> deletions = new ArrayList<Deletion<T>>();
 
-	public void addAddition(Addition addition) {
+	public void addAddition(Addition<T> addition) {
 		additions.add(addition);
 	}
 
-	public void addDeletion(Deletion deletion) {
+	public void addDeletion(Deletion<T> deletion) {
 		deletions.add(deletion);
 	}
 
-	public List<Addition> getAdditions() {
+	public List<Addition<T>> getAdditions() {
 		return Collections.unmodifiableList(additions);
 	}
 
-	public List<Deletion> getDeletions() {
+	public List<Deletion<T>> getDeletions() {
 		return Collections.unmodifiableList(deletions);
 	}
 
-	public static abstract class Change {
+	public static abstract class Change<T> {
 		private final int start;
 		private final int length;
 
@@ -43,20 +43,20 @@ public class Patch {
 		}
 	}
 
-	public static class Addition extends Change {
-		private List<String> addedLines;
+	public static class Addition<T> extends Change<T> {
+		private List<T> addedLines;
 
-		public Addition(List<String> addedLines, int start, int length) {
+		public Addition(List<T> currentAddition, int start, int length) {
 			super(start, length);
-			this.addedLines = addedLines;
+			this.addedLines = currentAddition;
 		}
 
-		public List<String> getAddedLines() {
+		public List<T> getAddedLines() {
 			return addedLines;
 		}
 	}
 
-	public static class Deletion extends Change {
+	public static class Deletion<T> extends Change<T> {
 		public Deletion(int start, int length) {
 			super(start, length);
 		}

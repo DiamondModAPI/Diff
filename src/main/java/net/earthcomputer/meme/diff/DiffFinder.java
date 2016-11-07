@@ -2,20 +2,18 @@ package net.earthcomputer.meme.diff;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
-public class DiffFinder {
+public class DiffFinder<T> {
 
 	public static final int VERSION = 0;
 
@@ -47,29 +45,32 @@ public class DiffFinder {
 			return;
 		}
 
-		new DiffFinder.Builder().setBaseFile(baseFile).setWorkFile(workFile).setOutputFile(patchFile).build()
-				.writePatchFile();
+		new DiffFinder.Builder<String>().setDiffFormat(DiffFormats.NORMAL).setBaseFile(baseFile).setWorkFile(workFile)
+				.setOutputFile(patchFile).build().writePatchFile();
 	}
 
-	private final List<String> baseLines;
-	private final List<String> workLines;
+	private final IDiffFormat<T> format;
+	private final List<T> baseLines;
+	private final List<T> workLines;
 	private final PrintWriter output;
 
-	private DiffFinder(List<String> baseLines, List<String> workLines, PrintWriter output) {
+	private DiffFinder(IDiffFormat<T> format, List<T> baseLines, List<T> workLines, PrintWriter output) {
+		this.format = format;
 		this.baseLines = baseLines;
 		this.workLines = workLines;
 		this.output = output;
 	}
 
 	public void writePatchFile() {
-		Patch patch = computePatch();
+		Patch<T> patch = computePatch();
 
-		Iterator<Addition> additionItr = patch.getAdditions().iterator();
-		Iterator<Deletion> deletionItr = patch.getDeletions().iterator();
-		Addition addition = additionItr.hasNext() ? additionItr.next() : null;
-		Deletion deletion = deletionItr.hasNext() ? deletionItr.next() : null;
+		Iterator<Addition<T>> additionItr = patch.getAdditions().iterator();
+		Iterator<Deletion<T>> deletionItr = patch.getDeletions().iterator();
+		Addition<T> addition = additionItr.hasNext() ? additionItr.next() : null;
+		Deletion<T> deletion = deletionItr.hasNext() ? deletionItr.next() : null;
 
 		output.println("meme-diff version " + VERSION);
+		output.println("format " + format.getName());
 
 		int prevStart = -1;
 		while (addition != null || deletion != null) {
@@ -95,19 +96,20 @@ public class DiffFinder {
 					prevStart = addition.getStart();
 				}
 				output.println("!add " + addition.getStart() + "," + addition.getLength());
-				for (String addedLine : addition.getAddedLines()) {
-					output.println(addedLine);
-				}
+				format.printElements(addition.getAddedLines(), output);
 				addition = additionItr.hasNext() ? additionItr.next() : null;
 			}
 		}
 
+		// Make sure the file ends with a newline
+		output.println();
+
 		output.flush();
 	}
 
-	public Patch computePatch() {
-		Patch patch = new Patch();
-		List<String> lcs = lcs();
+	public Patch<T> computePatch() {
+		Patch<T> patch = new Patch<T>();
+		List<T> lcs = lcs();
 
 		int indexInLcs = 0;
 		int indexInBase = 0;
@@ -115,14 +117,14 @@ public class DiffFinder {
 
 		int currentAdditionStart = -1;
 		int currentAdditionLength = -1;
-		List<String> currentAddition = new ArrayList<String>();
+		List<T> currentAddition = new ArrayList<T>();
 		int currentDeletionStart = -1;
 		int currentDeletionLength = -1;
 
 		while (indexInBase < baseLines.size() || indexInWork < workLines.size()) {
-			String lineInLcs = indexInLcs < lcs.size() ? lcs.get(indexInLcs) : null;
-			String lineInBase = indexInBase < baseLines.size() ? baseLines.get(indexInBase) : null;
-			String lineInWork = indexInWork < workLines.size() ? workLines.get(indexInWork) : null;
+			T lineInLcs = indexInLcs < lcs.size() ? lcs.get(indexInLcs) : null;
+			T lineInBase = indexInBase < baseLines.size() ? baseLines.get(indexInBase) : null;
+			T lineInWork = indexInWork < workLines.size() ? workLines.get(indexInWork) : null;
 
 			boolean baseEqualsLcs = lineInLcs == null ? lineInBase == null : lineInLcs.equals(lineInBase);
 			boolean workEqualsLcs = lineInLcs == null ? lineInWork == null : lineInLcs.equals(lineInWork);
@@ -157,15 +159,15 @@ public class DiffFinder {
 
 			if (!added && currentAdditionStart != -1) {
 				// Copy addition to patch
-				patch.addAddition(new Addition(currentAddition, currentAdditionStart, currentAdditionLength));
-				currentAddition = new ArrayList<String>();
+				patch.addAddition(new Addition<T>(currentAddition, currentAdditionStart, currentAdditionLength));
+				currentAddition = new ArrayList<T>();
 				currentAdditionStart = -1;
 				currentAdditionLength = -1;
 			}
 
 			if (!deleted && currentDeletionStart != -1) {
 				// Copy deletion to patch
-				patch.addDeletion(new Deletion(currentDeletionStart, currentDeletionLength));
+				patch.addDeletion(new Deletion<T>(currentDeletionStart, currentDeletionLength));
 				currentDeletionStart = -1;
 				currentDeletionLength = -1;
 			}
@@ -173,17 +175,17 @@ public class DiffFinder {
 
 		// Flush any non-copied addition and deletion to patch
 		if (currentAdditionStart != -1) {
-			patch.addAddition(new Addition(currentAddition, currentAdditionStart, currentAdditionLength));
+			patch.addAddition(new Addition<T>(currentAddition, currentAdditionStart, currentAdditionLength));
 		}
 
 		if (currentDeletionStart != -1) {
-			patch.addDeletion(new Deletion(currentDeletionStart, currentDeletionLength));
+			patch.addDeletion(new Deletion<T>(currentDeletionStart, currentDeletionLength));
 		}
 
 		return patch;
 	}
 
-	private List<String> lcs() {
+	private List<T> lcs() {
 		int[][] lengths = new int[baseLines.size() + 1][workLines.size() + 1];
 
 		// row 0 and column 0 are initialized to 0 already
@@ -196,7 +198,7 @@ public class DiffFinder {
 					lengths[i + 1][j + 1] = Math.max(lengths[i + 1][j], lengths[i][j + 1]);
 
 		// read the substring out from the matrix
-		List<String> lcs = new ArrayList<String>();
+		List<T> lcs = new ArrayList<T>();
 		for (int x = baseLines.size(), y = workLines.size(); x != 0 && y != 0;) {
 			if (lengths[x][y] == lengths[x - 1][y])
 				x--;
@@ -214,63 +216,60 @@ public class DiffFinder {
 		return lcs;
 	}
 
-	public static class Builder {
-		private List<String> baseLines;
-		private List<String> workLines;
+	public static class Builder<T> {
+		private IDiffFormat<T> format;
+		private List<T> baseLines;
+		private List<T> workLines;
 		private PrintWriter output;
 
-		public Builder setBaseLines(List<String> baseLines) {
+		public Builder<T> setDiffFormat(IDiffFormat<T> format) {
+			this.format = format;
+			return this;
+		}
+
+		public Builder<T> setBaseLines(List<T> baseLines) {
 			this.baseLines = baseLines;
 			return this;
 		}
 
-		public Builder setBaseReader(Reader baseReader) {
-			return setBaseLines(Utils.getLinesFromReader(baseReader));
+		public Builder<T> setBaseInputStream(InputStream baseInputStream) {
+			return setBaseLines(format.readElements(new Scanner(baseInputStream), -1));
 		}
 
-		public Builder setBaseInputStream(InputStream baseInputStream) {
-			return setBaseReader(new InputStreamReader(baseInputStream));
+		public Builder<T> setBaseFile(File file) {
+			return setBaseInputStream(Utils.getFileInputStream(file));
 		}
 
-		public Builder setBaseFile(File file) {
-			return setBaseReader(Utils.getFileReader(file));
-		}
-
-		public Builder setWorkLines(List<String> workLines) {
+		public Builder<T> setWorkLines(List<T> workLines) {
 			this.workLines = workLines;
 			return this;
 		}
 
-		public Builder setWorkReader(Reader workReader) {
-			return setWorkLines(Utils.getLinesFromReader(workReader));
+		public Builder<T> setWorkInputStream(InputStream workInputStream) {
+			return setWorkLines(format.readElements(new Scanner(workInputStream), -1));
 		}
 
-		public Builder setWorkInputStream(InputStream workInputStream) {
-			return setWorkReader(new InputStreamReader(workInputStream));
+		public Builder<T> setWorkFile(File file) {
+			return setWorkInputStream(Utils.getFileInputStream(file));
 		}
 
-		public Builder setWorkFile(File file) {
-			return setWorkReader(Utils.getFileReader(file));
-		}
-
-		public Builder setOutput(PrintWriter output) {
+		public Builder<T> setOutput(PrintWriter output) {
 			this.output = output;
 			return this;
 		}
 
-		public Builder setOutputWriter(Writer writer) {
-			return setOutput(new PrintWriter(writer));
-		}
-
-		public Builder setOutputStream(OutputStream output) {
+		public Builder<T> setOutputStream(OutputStream output) {
 			return setOutput(new PrintWriter(output));
 		}
 
-		public Builder setOutputFile(File output) {
-			return setOutputWriter(Utils.getFileWriter(output));
+		public Builder<T> setOutputFile(File output) {
+			return setOutputStream(Utils.getFileOutputStream(output));
 		}
 
-		public DiffFinder build() {
+		public DiffFinder<T> build() {
+			if (format == null) {
+				throw new IllegalStateException("format not set");
+			}
 			if (baseLines == null) {
 				throw new IllegalStateException("baseLines not set");
 			}
@@ -280,7 +279,7 @@ public class DiffFinder {
 			if (output == null) {
 				throw new IllegalStateException("output not set");
 			}
-			return new DiffFinder(baseLines, workLines, output);
+			return new DiffFinder<T>(format, baseLines, workLines, output);
 		}
 	}
 
