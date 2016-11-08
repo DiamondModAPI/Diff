@@ -9,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
 class Utils {
 
@@ -28,6 +30,26 @@ class Utils {
 			return new BufferedOutputStream(new FileOutputStream(file));
 		} catch (IOException e) {
 			throw new NoSuchFileException(file.getAbsolutePath(), e);
+		}
+	}
+
+	private static final Pattern NEWLINE_PATTERN = Pattern.compile("\n");
+
+	static boolean hasNextLine(Scanner scanner) {
+		if (scanner.hasNextLine()) {
+			return true;
+		} else {
+			scanner.useDelimiter(NEWLINE_PATTERN);
+			return scanner.hasNext();
+		}
+	}
+	
+	static String nextLine(Scanner scanner) {
+		if (scanner.hasNextLine()) {
+			return scanner.nextLine();
+		} else {
+			scanner.useDelimiter(NEWLINE_PATTERN);
+			return scanner.next();
 		}
 	}
 }

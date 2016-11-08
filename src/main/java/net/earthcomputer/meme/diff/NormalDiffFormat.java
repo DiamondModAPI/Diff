@@ -18,8 +18,8 @@ public class NormalDiffFormat implements IDiffFormat<String> {
 			count = Integer.MAX_VALUE;
 		}
 		List<String> lines = new ArrayList<String>();
-		for (int i = 0; i < count && in.hasNextLine(); i++) {
-			lines.add(in.nextLine());
+		for (int i = 0; i < count && Utils.hasNextLine(in); i++) {
+			lines.add(Utils.nextLine(in));
 		}
 		return lines;
 	}
