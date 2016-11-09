@@ -16,9 +16,9 @@ import net.earthcomputer.meme.diff.Patch.Deletion;
 public class Patcher<T> {
 
 	public static void main(String[] args) {
-		if (args.length != 3) {
+		if (args.length < 3 || args.length > 4) {
 			System.err.println(
-					"java -cp memediff.jar net.earthcomputer.diamond.diff.Patcher <base-file> <patch-file> <output-work-file>");
+					"java -cp memediff.jar net.earthcomputer.diamond.diff.Patcher <base-file> <patch-file> <output-work-file> [patch-file-format]");
 			System.exit(1);
 			return;
 		}
@@ -44,9 +44,17 @@ public class Patcher<T> {
 			return;
 		}
 
+		IPatchFileFormat patchFileFormat = PatchFileFormats.TEXT;
+		if (args.length > 3) {
+			patchFileFormat = PatchFileFormats.byName(args[3]);
+			if (patchFileFormat == null) {
+				patchFileFormat = PatchFileFormats.TEXT;
+			}
+		}
+
 		try {
-			new Patcher.Builder<Object>().setPatchFile(patchFile).setBaseFile(baseFile).setOutputFile(workFile).build()
-					.writeWorkFile();
+			new Patcher.Builder<Object>().setPatchFileFormat(patchFileFormat).setPatchFile(patchFile)
+					.setBaseFile(baseFile).setOutputFile(workFile).build().writeWorkFile();
 		} catch (InvalidPatchFormatException e) {
 			System.err.println("The patch file had invalid format: " + e.getMessage());
 			System.exit(1);

@@ -23,6 +23,11 @@ public class TextPatchFileFormat implements IPatchFileFormat {
 	private static final Pattern ADDITION_PATTERN = Pattern.compile("\\s*!add\\s+(\\d+)\\s*,\\s*(\\d+)\\s*");
 
 	@Override
+	public String getName() {
+		return "text";
+	}
+
+	@Override
 	public <T> PatchInfo<T> readPatch(InputStream in) throws InvalidPatchFormatException {
 		PatchInfo<T> patchInfo = new PatchInfo<T>();
 		patchInfo.setPatch(new Patch<T>());

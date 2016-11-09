@@ -1,5 +1,8 @@
 package net.earthcomputer.meme.diff;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -167,6 +170,16 @@ public class JavaDiffFormat implements IDiffFormat<JavaDiffFormat.Token> {
 		if (!elements.get(elements.size() - 1).getValue().endsWith("\n")) {
 			out.println();
 		}
+	}
+
+	@Override
+	public void serializeElement(Token element, DataOutputStream data) throws IOException {
+		data.writeUTF(element.getValue());
+	}
+
+	@Override
+	public Token deserializeElement(DataInputStream data) throws IOException {
+		return new Token(data.readUTF());
 	}
 
 	public static class Token {

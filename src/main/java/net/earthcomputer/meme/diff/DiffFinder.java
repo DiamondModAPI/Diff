@@ -17,8 +17,9 @@ public class DiffFinder<T> {
 
 	@SuppressWarnings("unchecked")
 	public static <T> void main(String[] args) {
-		if (args.length != 3 && args.length != 4) {
-			System.err.println("java -jar memediff.jar <base-file> <work-file> <output-patch-file> [patch-format]");
+		if (args.length < 3 || args.length > 5) {
+			System.err.println(
+					"java -jar memediff.jar <base-file> <work-file> <output-patch-file> [patch-format] [patch-file-format]");
 			System.exit(1);
 			return;
 		}
@@ -45,16 +46,24 @@ public class DiffFinder<T> {
 		}
 
 		IDiffFormat<T> patchFormat = (IDiffFormat<T>) DiffFormats.NORMAL;
-		if (args.length == 4) {
+		if (args.length > 3) {
 			patchFormat = (IDiffFormat<T>) DiffFormats.getByName(args[3]);
 			if (patchFormat == null) {
 				patchFormat = (IDiffFormat<T>) DiffFormats.NORMAL;
 			}
 		}
 
+		IPatchFileFormat patchFileFormat = PatchFileFormats.TEXT;
+		if (args.length > 4) {
+			patchFileFormat = PatchFileFormats.byName(args[4]);
+			if (patchFileFormat == null) {
+				patchFileFormat = PatchFileFormats.TEXT;
+			}
+		}
+
 		try {
-			new DiffFinder.Builder<T>().setDiffFormat(patchFormat).setBaseFile(baseFile).setWorkFile(workFile)
-					.setOutputFile(patchFile).build().writePatchFile();
+			new DiffFinder.Builder<T>().setPatchFileFormat(patchFileFormat).setDiffFormat(patchFormat)
+					.setBaseFile(baseFile).setWorkFile(workFile).setOutputFile(patchFile).build().writePatchFile();
 		} catch (IOException e) {
 			System.err.println("An I/O error occurred");
 			e.printStackTrace();

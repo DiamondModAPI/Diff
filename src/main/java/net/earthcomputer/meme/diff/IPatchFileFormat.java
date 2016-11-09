@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface IPatchFileFormat {
+	
+	String getName();
 
 	<T> PatchInfo<T> readPatch(InputStream in) throws InvalidPatchFormatException, IOException;
 

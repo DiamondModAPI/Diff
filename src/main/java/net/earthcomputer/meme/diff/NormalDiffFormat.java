@@ -1,5 +1,8 @@
 package net.earthcomputer.meme.diff;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,16 @@ public class NormalDiffFormat implements IDiffFormat<String> {
 		for (String element : elements) {
 			out.println(element);
 		}
+	}
+
+	@Override
+	public void serializeElement(String element, DataOutputStream data) throws IOException {
+		data.writeUTF(element);
+	}
+
+	@Override
+	public String deserializeElement(DataInputStream data) throws IOException {
+		return data.readUTF();
 	}
 
 }
