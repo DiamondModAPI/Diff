@@ -107,7 +107,6 @@ public class BinaryPatchFileFormat implements IPatchFileFormat {
 			data.writeInt(addition.getStart());
 			data.writeInt(addition.getLength());
 			List<T> addedLines = addition.getAddedLines();
-			data.writeInt(addedLines.size());
 			for (T addedLine : addedLines) {
 				patch.getFormat().serializeElement(addedLine, data);
 			}
@@ -119,6 +118,9 @@ public class BinaryPatchFileFormat implements IPatchFileFormat {
 			data.writeInt(deletion.getStart());
 			data.writeInt(deletion.getLength());
 		}
+		
+		data.flush();
+		data.close();
 	}
 
 }

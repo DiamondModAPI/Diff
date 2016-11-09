@@ -15,25 +15,30 @@ apply plugin: 'eclipse'
 
 final int NUMBER_OF_TESTS = 3
 
-def createTestTask(int testNumber, String testName, String mainClass, String inputFile, String processFile, String outputFile, String expectedOutputFile, String patchFormat) {
-	Task testTask = task("test${testName}${testNumber}") << {
-		File output = file("test/${outputFile}${testNumber}.txt")
+def createTestTask(int testNumber, String testName, String mainClass, String inputFile, String processFile, String outputFile, String expectedOutputFile, String patchFormat, String patchFileFormat) {
+	Task testTask = task("test${testName}${testNumber}${patchFileFormat}") << {
+		String outputFileExt = patchFileFormat == 'binary' ? 'bin' : 'txt'
+		String processFileExt = processFile == 'patch' ? outputFileExt : 'txt'
+		String expectedFileExt = outputFile == 'patchTestOutput' ? outputFileExt : 'txt'
+		File output = file("test/${outputFile}${testNumber}.${outputFileExt}")
 		if (output.exists()) {
 			output.delete()
 		}
 		
-		String[] args = [ 'java', '-cp', "${jar.archivePath}", mainClass, "test/${inputFile}${testNumber}.txt", "test/${processFile}${testNumber}.txt", "test/${outputFile}${testNumber}.txt" ]
+		List<String> args = [ 'java', '-cp', "${jar.archivePath}", mainClass, "test/${inputFile}${testNumber}.txt", "test/${processFile}${testNumber}.${processFileExt}", "test/${outputFile}${testNumber}.${outputFileExt}" ]
 		if (patchFormat != null) {
-			String[] newArgs = new String[args.length + 1];
-			System.arraycopy(args, 0, newArgs, 0, args.length);
-			newArgs[args.length] = patchFormat;
-			args = newArgs;
+			args += patchFormat
 		}
- 		Process process = new ProcessBuilder(args).inheritIO().directory(file('.')).start()
+		args += patchFileFormat
+		String[] argsArray = new String[args.size()]
+		for (int i = 0; i < argsArray.length; i++) {
+			argsArray[i] = args.get i
+		}
+ 		Process process = new ProcessBuilder(argsArray).inheritIO().directory(file('.')).start()
 		int exitCode = process.waitFor()
 		if (exitCode != 0) {
 			println "Test failed, process exited with exitcode ${exitCode}"
-		} else if (!FileUtils.contentEquals(output, file("test/${expectedOutputFile}${testNumber}.txt"))) {
+		} else if (!FileUtils.contentEquals(output, file("test/${expectedOutputFile}${testNumber}.${expectedFileExt}"))) {
 			println 'Test failed, output file contents did not match the expected file contents'
 		} else {
 			println 'Test successful'
@@ -43,17 +48,17 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 	return testTask
 }
 
-def createTestDiffTask(int testNumber) {
+def createTestDiffTask(int testNumber, String patchFileFormat) {
 	final String[] PATCH_FORMATS = [
 		"normal",
 		"java",
 		"byte"
 	]
-	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch', PATCH_FORMATS[testNumber - 1])
+	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch', PATCH_FORMATS[testNumber - 1], patchFileFormat)
 }
 
-def createTestPatchTask(int testNumber) {
-	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.meme.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work', null)
+def createTestPatchTask(int testNumber, String patchFileFormat) {
+	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.meme.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work', null, patchFileFormat)
 }
 
 task testAllDiff
@@ -64,8 +69,10 @@ testAll.dependsOn testAllPatch
 test.dependsOn testAll
 
 for (int i = 1; i <= NUMBER_OF_TESTS; i++) {
-	testAllDiff.dependsOn createTestDiffTask(i)
-	testAllPatch.dependsOn createTestPatchTask(i)
+	testAllDiff.dependsOn createTestDiffTask(i, 'text')
+	testAllDiff.dependsOn createTestDiffTask(i, 'binary')
+	testAllPatch.dependsOn createTestPatchTask(i, 'text')
+	testAllPatch.dependsOn createTestPatchTask(i, 'binary')
 }
 
 archivesBaseName = 'memediff'

@@ -1,7 +1,7 @@
 .classpath
 build/
 bin/
-test/*TestOutput*.txt
+test/*TestOutput*.*
 .gradle/
 .project
 .settings/
