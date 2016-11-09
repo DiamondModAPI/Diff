@@ -37,7 +37,7 @@ format java
 
 !delete 159,1
 !add 159,1
-<<<
+>>>
 
 !delete 183,1
 !add 183,1

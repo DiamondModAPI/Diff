@@ -15,7 +15,7 @@ public class JavaDiffFormat implements IDiffFormat<JavaDiffFormat.Token> {
 	private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 	private static final Pattern SINGLE_CHAR = Pattern.compile("[^\\w\\s]");
 	private static final Pattern MULTICHAR_OPERATOR = Pattern
-			.compile("==|&&|\\|\\||>>|<<<?|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|>>=|<<<?=|->|::|!=|<=|>=|\\+\\+|--");
+			.compile("==|&&|\\|\\||>>>?|<<|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|>>>?=|<<=|->|::|!=|<=|>=|\\+\\+|--");
 	private static final Pattern WORD = Pattern.compile("[\\w_\\$]+");
 	private static final Pattern SINGLE_QUOTED_END = Pattern.compile(".*?'");
 	private static final Pattern SINGLE_QUOTED_TEXT = Pattern.compile("'.+?'");
