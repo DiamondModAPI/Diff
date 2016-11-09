@@ -1,0 +1,50 @@
+package example;
+
+import foo.bar.Baz;
+
+public class Hello {
+	
+	// This comment has been changed
+	/*
+	 * This comment has also been changed
+	 */
+	
+	public static void main(String[] args) {
+		System.out.println("Goodbye World!");
+		System.out.println("Escaped: \" this is still inside the string");
+		System.out.println("Double escaped: \\");
+		System.out.println('c');
+		
+		int a = 5;
+		a -= 2;
+		a += 3;
+		a /= 4;
+		a *= 5;
+		a %= 6;
+		a = a <<< 7;
+		a = a >> 8;
+		a = a << 9;
+		a >>= 10;
+		a <<= 11;
+		a <<<= 12;
+		a ^= 13;
+		a |= 14;
+		a &= 15;
+		
+		boolean no = false, yes = true;
+		if (yes == no) {
+			// Wtf?
+		}
+		if (yes && no) {
+			// Impossible
+		}
+		if (yes || no) {
+			// Reaches here
+		}
+		
+		// Test lambda expressions
+		new Thread(Baz::doSomething());
+		new Thread(() -> Baz.doSomething());
+	}
+	
+}

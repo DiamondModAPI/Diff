@@ -24,6 +24,20 @@ public class Patch<T> {
 	public List<Deletion<T>> getDeletions() {
 		return Collections.unmodifiableList(deletions);
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append("Additions:");
+		for (Addition<T> addition : additions) {
+			str.append("\n" + addition);
+		}
+		str.append("\nDeletions:");
+		for (Deletion<T> deletion : deletions) {
+			str.append("\n" + deletion);
+		}
+		return str.toString();
+	}
 
 	public static abstract class Change<T> {
 		private final int start;
@@ -41,6 +55,11 @@ public class Patch<T> {
 		public int getLength() {
 			return length;
 		}
+		
+		@Override
+		public String toString() {
+			return "from " + start + ", len " + length;
+		}
 	}
 
 	public static class Addition<T> extends Change<T> {
@@ -53,6 +72,16 @@ public class Patch<T> {
 
 		public List<T> getAddedLines() {
 			return addedLines;
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder str = new StringBuilder(super.toString());
+			str.append(':');
+			for (T addedLine : addedLines) {
+				str.append("\n  ").append(addedLine);
+			}
+			return str.toString();
 		}
 	}
 

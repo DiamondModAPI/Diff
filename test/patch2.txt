@@ -1,0 +1,106 @@
+meme-diff version 0
+format java
+
+!delete 28,1
+!add 28,1
+// This comment has been changed
+
+!delete 31,1
+!add 31,1
+/*
+	 * This comment has also been changed
+	 */
+
+!delete 34,1
+
+!delete 37,2
+
+!delete 63,1
+!add 63,1
+"Goodbye World!"
+
+!delete 115,1
+!add 115,1
+-=
+
+!delete 123,1
+!add 123,1
++=
+
+!delete 131,1
+!add 131,1
+/=
+
+!delete 139,1
+!add 139,1
+*=
+
+!delete 159,1
+!add 159,1
+<<<
+
+!delete 183,1
+!add 183,1
+<<
+
+!delete 218,1
+!add 218,1
+^=
+
+!delete 234,1
+!add 234,1
+&=
+
+!delete 244,1
+!add 244,1
+no
+
+!delete 248,1
+!add 248,1
+false
+
+!delete 251,1
+!add 251,1
+yes
+
+!delete 255,1
+!add 255,1
+true
+
+!delete 264,1
+!add 264,1
+==
+
+!delete 272,1
+!add 272,1
+// Wtf?
+
+!delete 283,1
+!add 283,1
+&&
+
+!delete 291,1
+!add 291,1
+// Impossible
+
+!delete 302,1
+!add 302,1
+||
+
+!delete 310,1
+!add 310,1
+// Reaches here
+
+!delete 325,5
+
+!delete 331,1
+!add 331,1
+::
+
+!add 342,5
+() -> 
+
+!delete 344,1
+!add 344,1
+.
+

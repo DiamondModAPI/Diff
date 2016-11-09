@@ -13,16 +13,23 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-final int NUMBER_OF_TESTS = 1
+final int NUMBER_OF_TESTS = 2
 
-def createTestTask(int testNumber, String testName, String mainClass, String inputFile, String processFile, String outputFile, String expectedOutputFile) {
+def createTestTask(int testNumber, String testName, String mainClass, String inputFile, String processFile, String outputFile, String expectedOutputFile, String patchFormat) {
 	Task testTask = task("test${testName}${testNumber}") << {
 		File output = file("test/${outputFile}${testNumber}.txt")
 		if (output.exists()) {
 			output.delete()
 		}
 		
-		Process process = new ProcessBuilder('java', '-cp', "${jar.archivePath}", mainClass, "test/${inputFile}${testNumber}.txt", "test/${processFile}${testNumber}.txt", "test/${outputFile}${testNumber}.txt").inheritIO().directory(file('.')).start()
+		String[] args = [ 'java', '-cp', "${jar.archivePath}", mainClass, "test/${inputFile}${testNumber}.txt", "test/${processFile}${testNumber}.txt", "test/${outputFile}${testNumber}.txt" ]
+		if (patchFormat != null) {
+			String[] newArgs = new String[args.length + 1];
+			System.arraycopy(args, 0, newArgs, 0, args.length);
+			newArgs[args.length] = patchFormat;
+			args = newArgs;
+		}
+ 		Process process = new ProcessBuilder(args).inheritIO().directory(file('.')).start()
 		int exitCode = process.waitFor()
 		if (exitCode != 0) {
 			println "Test failed, process exited with exitcode ${exitCode}"
@@ -37,11 +44,15 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 }
 
 def createTestDiffTask(int testNumber) {
-	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch')
+	final String[] PATCH_FORMATS = [
+		"normal",
+		"java"
+	]
+	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch', PATCH_FORMATS[testNumber - 1])
 }
 
 def createTestPatchTask(int testNumber) {
-	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.meme.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work')
+	return createTestTask(testNumber, 'Patch', 'net.earthcomputer.meme.diff.Patcher', 'base', 'patch', 'workTestOutput', 'work', null)
 }
 
 task testAllDiff

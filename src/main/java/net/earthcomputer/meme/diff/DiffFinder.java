@@ -17,9 +17,10 @@ public class DiffFinder<T> {
 
 	public static final int VERSION = 0;
 
-	public static void main(String[] args) {
-		if (args.length != 3) {
-			System.err.println("java -jar memediff.jar <base-file> <work-file> <output-patch-file>");
+	@SuppressWarnings("unchecked")
+	public static <T> void main(String[] args) {
+		if (args.length != 3 && args.length != 4) {
+			System.err.println("java -jar memediff.jar <base-file> <work-file> <output-patch-file> [patch-format]");
 			System.exit(1);
 			return;
 		}
@@ -45,7 +46,15 @@ public class DiffFinder<T> {
 			return;
 		}
 
-		new DiffFinder.Builder<String>().setDiffFormat(DiffFormats.NORMAL).setBaseFile(baseFile).setWorkFile(workFile)
+		IDiffFormat<T> patchFormat = (IDiffFormat<T>) DiffFormats.NORMAL;
+		if (args.length == 4) {
+			patchFormat = (IDiffFormat<T>) DiffFormats.getByName(args[3]);
+			if (patchFormat == null) {
+				patchFormat = (IDiffFormat<T>) DiffFormats.NORMAL;
+			}
+		}
+
+		new DiffFinder.Builder<T>().setDiffFormat(patchFormat).setBaseFile(baseFile).setWorkFile(workFile)
 				.setOutputFile(patchFile).build().writePatchFile();
 	}
 
