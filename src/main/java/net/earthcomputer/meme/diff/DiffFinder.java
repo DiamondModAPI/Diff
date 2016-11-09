@@ -1,21 +1,19 @@
 package net.earthcomputer.meme.diff;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
+import net.earthcomputer.meme.diff.IPatchFileFormat.PatchInfo;
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
 public class DiffFinder<T> {
-
-	public static final int VERSION = 0;
 
 	@SuppressWarnings("unchecked")
 	public static <T> void main(String[] args) {
@@ -54,66 +52,36 @@ public class DiffFinder<T> {
 			}
 		}
 
-		new DiffFinder.Builder<T>().setDiffFormat(patchFormat).setBaseFile(baseFile).setWorkFile(workFile)
-				.setOutputFile(patchFile).build().writePatchFile();
+		try {
+			new DiffFinder.Builder<T>().setDiffFormat(patchFormat).setBaseFile(baseFile).setWorkFile(workFile)
+					.setOutputFile(patchFile).build().writePatchFile();
+		} catch (IOException e) {
+			System.err.println("An I/O error occurred");
+			e.printStackTrace();
+			System.exit(1);
+			return;
+		}
 	}
 
+	private final IPatchFileFormat patchFileFormat;
 	private final IDiffFormat<T> format;
 	private final List<T> baseLines;
 	private final List<T> workLines;
-	private final PrintWriter output;
+	private final OutputStream output;
 
-	private DiffFinder(IDiffFormat<T> format, List<T> baseLines, List<T> workLines, PrintWriter output) {
+	private DiffFinder(IPatchFileFormat patchFileFormat, IDiffFormat<T> format, List<T> baseLines, List<T> workLines,
+			OutputStream output) {
+		this.patchFileFormat = patchFileFormat;
 		this.format = format;
 		this.baseLines = baseLines;
 		this.workLines = workLines;
 		this.output = output;
 	}
 
-	public void writePatchFile() {
+	public void writePatchFile() throws IOException {
 		Patch<T> patch = computePatch();
 
-		Iterator<Addition<T>> additionItr = patch.getAdditions().iterator();
-		Iterator<Deletion<T>> deletionItr = patch.getDeletions().iterator();
-		Addition<T> addition = additionItr.hasNext() ? additionItr.next() : null;
-		Deletion<T> deletion = deletionItr.hasNext() ? deletionItr.next() : null;
-
-		output.println("meme-diff version " + VERSION);
-		output.println("format " + format.getName());
-
-		int prevStart = -1;
-		while (addition != null || deletion != null) {
-			boolean deletionFirst;
-			if (addition == null) {
-				deletionFirst = true;
-			} else if (deletion == null) {
-				deletionFirst = false;
-			} else {
-				deletionFirst = deletion.getStart() <= addition.getStart();
-			}
-
-			if (deletionFirst) {
-				if (deletion.getStart() != prevStart) {
-					output.println();
-					prevStart = deletion.getStart();
-				}
-				output.println("!delete " + deletion.getStart() + "," + deletion.getLength());
-				deletion = deletionItr.hasNext() ? deletionItr.next() : null;
-			} else {
-				if (addition.getStart() != prevStart) {
-					output.println();
-					prevStart = addition.getStart();
-				}
-				output.println("!add " + addition.getStart() + "," + addition.getLength());
-				format.printElements(addition.getAddedLines(), output);
-				addition = additionItr.hasNext() ? additionItr.next() : null;
-			}
-		}
-
-		// Make sure the file ends with a newline
-		output.println();
-
-		output.flush();
+		patchFileFormat.writePatch(new PatchInfo<T>(format, patch), output);
 	}
 
 	public Patch<T> computePatch() {
@@ -226,10 +194,16 @@ public class DiffFinder<T> {
 	}
 
 	public static class Builder<T> {
+		private IPatchFileFormat patchFileFormat = PatchFileFormats.TEXT;
 		private IDiffFormat<T> format;
 		private List<T> baseLines;
 		private List<T> workLines;
-		private PrintWriter output;
+		private OutputStream output;
+
+		public Builder<T> setPatchFileFormat(IPatchFileFormat format) {
+			this.patchFileFormat = format;
+			return this;
+		}
 
 		public Builder<T> setDiffFormat(IDiffFormat<T> format) {
 			this.format = format;
@@ -262,13 +236,9 @@ public class DiffFinder<T> {
 			return setWorkInputStream(Utils.getFileInputStream(file));
 		}
 
-		public Builder<T> setOutput(PrintWriter output) {
+		public Builder<T> setOutputStream(OutputStream output) {
 			this.output = output;
 			return this;
-		}
-
-		public Builder<T> setOutputStream(OutputStream output) {
-			return setOutput(new PrintWriter(output));
 		}
 
 		public Builder<T> setOutputFile(File output) {
@@ -276,6 +246,9 @@ public class DiffFinder<T> {
 		}
 
 		public DiffFinder<T> build() {
+			if (patchFileFormat == null) {
+				throw new IllegalStateException("patchFileFormat cannot be null");
+			}
 			if (format == null) {
 				throw new IllegalStateException("format not set");
 			}
@@ -288,7 +261,7 @@ public class DiffFinder<T> {
 			if (output == null) {
 				throw new IllegalStateException("output not set");
 			}
-			return new DiffFinder<T>(format, baseLines, workLines, output);
+			return new DiffFinder<T>(patchFileFormat, format, baseLines, workLines, output);
 		}
 	}
 
