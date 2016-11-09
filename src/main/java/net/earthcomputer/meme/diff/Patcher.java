@@ -18,7 +18,7 @@ public class Patcher<T> {
 	public static void main(String[] args) {
 		if (args.length < 3 || args.length > 4) {
 			System.err.println(
-					"java -cp memediff.jar net.earthcomputer.diamond.diff.Patcher <base-file> <patch-file> <output-work-file> [patch-file-format]");
+					"java -cp memediff.jar net.earthcomputer.meme.diff.Patcher <base-file> <patch-file> <output-work-file> [patch-file-format]");
 			System.exit(1);
 			return;
 		}
