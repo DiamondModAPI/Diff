@@ -79,7 +79,7 @@ public class TextPatchFileFormat implements IPatchFileFormat {
 				if (matcher.matches()) {
 					int additionLength = Integer.parseInt(matcher.group(2));
 
-					List<T> addedLines = patchInfo.getFormat().readElements(scanner, additionLength);
+					List<T> addedLines = patchInfo.getFormat().readElementsFromPatchFile(scanner, additionLength);
 
 					patchInfo.getPatch().addAddition(
 							new Addition<T>(addedLines, Integer.parseInt(matcher.group(1)), additionLength));
@@ -126,7 +126,7 @@ public class TextPatchFileFormat implements IPatchFileFormat {
 					prevStart = addition.getStart();
 				}
 				pw.println("!add " + addition.getStart() + "," + addition.getLength());
-				patch.getFormat().printElements(addition.getAddedLines(), pw);
+				patch.getFormat().printElementsToPatchFile(addition.getAddedLines(), pw);
 				addition = additionItr.hasNext() ? additionItr.next() : null;
 			}
 		}

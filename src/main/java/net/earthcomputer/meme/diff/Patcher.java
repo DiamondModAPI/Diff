@@ -4,10 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 import net.earthcomputer.meme.diff.IPatchFileFormat.PatchInfo;
 import net.earthcomputer.meme.diff.Patch.Addition;
@@ -65,9 +63,9 @@ public class Patcher<T> {
 	private final IDiffFormat<T> format;
 	private final List<T> baseLines;
 	private final Patch<T> patch;
-	private final PrintWriter output;
+	private final OutputStream output;
 
-	private Patcher(IDiffFormat<T> format, List<T> baseLines, Patch<T> patch, PrintWriter output) {
+	private Patcher(IDiffFormat<T> format, List<T> baseLines, Patch<T> patch, OutputStream output) {
 		this.format = format;
 		this.baseLines = baseLines;
 		this.patch = patch;
@@ -77,10 +75,14 @@ public class Patcher<T> {
 	public void writeWorkFile() {
 		List<T> workLines = computeWorkFile();
 
-		format.printElements(workLines, output);
+		try {
+			format.writeElementsToWorkFile(workLines, output);
 
-		output.flush();
-		output.close();
+			output.flush();
+			output.close();
+		} catch (IOException e) {
+			throw new NoSuchFileException("output", e);
+		}
 	}
 
 	public List<T> computeWorkFile() {
@@ -128,7 +130,7 @@ public class Patcher<T> {
 		private IDiffFormat<T> format;
 		private List<T> baseLines;
 		private Patch<T> patch;
-		private PrintWriter output;
+		private OutputStream output;
 
 		public Builder<T> setPatchFileFormat(IPatchFileFormat format) {
 			this.patchFileFormat = format;
@@ -149,7 +151,11 @@ public class Patcher<T> {
 			if (format == null) {
 				throw new IllegalStateException("Cannot read base file before setting format");
 			}
-			return setBaseLines(format.readElements(new Scanner(inputStream), -1));
+			try {
+				return setBaseLines(format.readElementsFromBaseFile(inputStream));
+			} catch (IOException e) {
+				throw new NoSuchFileException("inputStream", e);
+			}
 		}
 
 		public Builder<T> setBaseFile(File file) {
@@ -177,17 +183,13 @@ public class Patcher<T> {
 			return setPatchInputStream(Utils.getFileInputStream(file));
 		}
 
-		public Builder<T> setOutput(PrintWriter output) {
-			this.output = output;
+		public Builder<T> setOutput(OutputStream outputStream) {
+			this.output = outputStream;
 			return this;
 		}
 
-		public Builder<T> setOutputStream(OutputStream outputStream) {
-			return setOutput(new PrintWriter(outputStream));
-		}
-
 		public Builder<T> setOutputFile(File outputFile) {
-			return setOutputStream(Utils.getFileOutputStream(outputFile));
+			return setOutput(Utils.getFileOutputStream(outputFile));
 		}
 
 		public Patcher<T> build() {

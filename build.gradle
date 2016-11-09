@@ -13,7 +13,7 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-final int NUMBER_OF_TESTS = 2
+final int NUMBER_OF_TESTS = 3
 
 def createTestTask(int testNumber, String testName, String mainClass, String inputFile, String processFile, String outputFile, String expectedOutputFile, String patchFormat) {
 	Task testTask = task("test${testName}${testNumber}") << {
@@ -46,7 +46,8 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 def createTestDiffTask(int testNumber) {
 	final String[] PATCH_FORMATS = [
 		"normal",
-		"java"
+		"java",
+		"byte"
 	]
 	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch', PATCH_FORMATS[testNumber - 1])
 }

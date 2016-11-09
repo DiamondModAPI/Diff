@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
 
 import net.earthcomputer.meme.diff.IPatchFileFormat.PatchInfo;
 import net.earthcomputer.meme.diff.Patch.Addition;
@@ -225,7 +224,11 @@ public class DiffFinder<T> {
 		}
 
 		public Builder<T> setBaseInputStream(InputStream baseInputStream) {
-			return setBaseLines(format.readElements(new Scanner(baseInputStream), -1));
+			try {
+				return setBaseLines(format.readElementsFromBaseFile(baseInputStream));
+			} catch (IOException e) {
+				throw new NoSuchFileException("baseInputStream", e);
+			}
 		}
 
 		public Builder<T> setBaseFile(File file) {
@@ -238,7 +241,11 @@ public class DiffFinder<T> {
 		}
 
 		public Builder<T> setWorkInputStream(InputStream workInputStream) {
-			return setWorkLines(format.readElements(new Scanner(workInputStream), -1));
+			try {
+				return setWorkLines(format.readElementsFromBaseFile(workInputStream));
+			} catch (IOException e) {
+				throw new NoSuchFileException("workInputStream", e);
+			}
 		}
 
 		public Builder<T> setWorkFile(File file) {

@@ -44,15 +44,11 @@ public class JavaDiffFormat implements IDiffFormat<JavaDiffFormat.Token> {
 	}
 
 	@Override
-	public List<Token> readElements(Scanner in, int count) {
+	public List<Token> readElementsFromPatchFile(Scanner in, int count) {
 		// Most tokens appear on the same line, so the basic concept is we
 		// iterate through the lines and then search for tokens in each line.
 		// The only multiline token, the multiline comment, is treated as a
 		// special case throughout this code.
-
-		if (count == -1) {
-			count = Integer.MAX_VALUE;
-		}
 
 		List<Token> tokens = new ArrayList<Token>();
 		String multilineComment = null;
@@ -151,7 +147,7 @@ public class JavaDiffFormat implements IDiffFormat<JavaDiffFormat.Token> {
 	}
 
 	@Override
-	public void printElements(List<Token> elements, PrintWriter out) {
+	public void printElementsToPatchFile(List<Token> elements, PrintWriter out) {
 		// We need to be careful we use the right newline character on the right
 		// operating system
 		for (Token token : elements) {

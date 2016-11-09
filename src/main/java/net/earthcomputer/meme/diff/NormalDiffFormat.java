@@ -16,10 +16,7 @@ public class NormalDiffFormat implements IDiffFormat<String> {
 	}
 
 	@Override
-	public List<String> readElements(Scanner in, int count) {
-		if (count == -1) {
-			count = Integer.MAX_VALUE;
-		}
+	public List<String> readElementsFromPatchFile(Scanner in, int count) {
 		List<String> lines = new ArrayList<String>();
 		for (int i = 0; i < count && Utils.hasNextLine(in); i++) {
 			lines.add(Utils.nextLine(in));
@@ -28,7 +25,7 @@ public class NormalDiffFormat implements IDiffFormat<String> {
 	}
 
 	@Override
-	public void printElements(List<String> elements, PrintWriter out) {
+	public void printElementsToPatchFile(List<String> elements, PrintWriter out) {
 		for (String element : elements) {
 			out.println(element);
 		}

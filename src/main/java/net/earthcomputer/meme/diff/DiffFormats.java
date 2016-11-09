@@ -10,8 +10,9 @@ public class DiffFormats {
 
 	public static final NormalDiffFormat NORMAL = new NormalDiffFormat();
 	public static final JavaDiffFormat JAVA = new JavaDiffFormat();
+	public static final ByteDiffFormat BYTE = new ByteDiffFormat();
 
-	private static final IDiffFormat<?>[] FORMATS = { NORMAL, JAVA };
+	private static final IDiffFormat<?>[] FORMATS = { NORMAL, JAVA, BYTE };
 	private static final Map<String, IDiffFormat<?>> nameToFormat = new HashMap<String, IDiffFormat<?>>();
 
 	static {
