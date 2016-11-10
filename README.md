@@ -90,7 +90,7 @@ Lines are serialized and deserialized as literal strings of `utf8` type in the b
 A "line" in the byte diff format is a single byte. The byte is serialized and deserialized literally in the binary patch file format. However, because this byte can assume the value of a control character, it is necessary to convert this byte to a two-digit hexadecimal number in the text-based patch file format. These two-digit hexadecimal numbers are not delimited by anything, so are just run together.
 
 ## Installation
-At the moment there is no online compiled version of MEMEDiff, so you will have to clone this repository and compile it yourself for the time being. (To get the Eclipse workspace, run `gradlew build`).
+At the moment there is no online compiled version of MEMEDiff, so you will have to clone this repository and compile it yourself for the time being. (To get the Eclipse workspace, run `gradlew eclipse`).
 
 ## Use via the command-line
 Altough MEMEDiff is intended to be used as a library, you can also invoke it via the command line as follows:
