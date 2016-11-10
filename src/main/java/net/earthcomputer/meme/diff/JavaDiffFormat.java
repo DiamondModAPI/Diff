@@ -10,6 +10,9 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The Java diff format, compares files Java-token-by-Java-token
+ */
 public class JavaDiffFormat implements IDiffFormat<JavaDiffFormat.Token> {
 
 	private static final Pattern WHITESPACE = Pattern.compile("\\s+");

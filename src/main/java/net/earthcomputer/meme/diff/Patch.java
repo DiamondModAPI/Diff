@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Contains additions and deletions to be made to the base file to produce the
+ * work file
+ */
 public class Patch<T> {
 
 	private List<Addition<T>> additions = new ArrayList<Addition<T>>();
@@ -24,7 +28,7 @@ public class Patch<T> {
 	public List<Deletion<T>> getDeletions() {
 		return Collections.unmodifiableList(deletions);
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder str = new StringBuilder();
@@ -55,7 +59,7 @@ public class Patch<T> {
 		public int getLength() {
 			return length;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "from " + start + ", len " + length;
@@ -73,7 +77,7 @@ public class Patch<T> {
 		public List<T> getAddedLines() {
 			return addedLines;
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuilder str = new StringBuilder(super.toString());

@@ -12,6 +12,10 @@ import net.earthcomputer.meme.diff.IPatchFileFormat.PatchInfo;
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
+/**
+ * This class is used to find the difference between the base file and the work
+ * file
+ */
 public class DiffFinder<T> {
 
 	@SuppressWarnings("unchecked")
@@ -86,12 +90,18 @@ public class DiffFinder<T> {
 		this.output = output;
 	}
 
+	/**
+	 * Computes and writes the patch file
+	 */
 	public void writePatchFile() throws IOException {
 		Patch<T> patch = computePatch();
 
 		patchFileFormat.writePatch(new PatchInfo<T>(format, patch), output);
 	}
 
+	/**
+	 * Computes the patch and returns it
+	 */
 	public Patch<T> computePatch() {
 		Patch<T> patch = new Patch<T>();
 		List<T> lcs = lcs();

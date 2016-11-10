@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * The byte diff format, compares files byte-by-byte
+ */
 public class ByteDiffFormat implements IDiffFormat<Byte> {
 
 	@Override

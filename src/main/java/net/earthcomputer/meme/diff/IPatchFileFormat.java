@@ -4,14 +4,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * A patch file format, defines how a patch can be represented in a file
+ */
 public interface IPatchFileFormat {
-	
+
+	/**
+	 * Returns the name of this patch file format
+	 */
 	String getName();
 
+	/**
+	 * Reads a patch from the given input stream
+	 */
 	<T> PatchInfo<T> readPatch(InputStream in) throws InvalidPatchFormatException, IOException;
 
+	/**
+	 * Writes a patch to the given output stream
+	 */
 	<T> void writePatch(PatchInfo<T> patch, OutputStream out) throws IOException;
 
+	/**
+	 * Contains the information that should be stored in a patch file
+	 */
 	public static class PatchInfo<T> {
 		private IDiffFormat<T> format;
 		private Patch<T> patch;

@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * The normal diff format, compares files line-by-line
+ */
 public class NormalDiffFormat implements IDiffFormat<String> {
 
 	@Override

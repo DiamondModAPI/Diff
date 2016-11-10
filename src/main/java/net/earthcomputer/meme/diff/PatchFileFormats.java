@@ -3,12 +3,21 @@ package net.earthcomputer.meme.diff;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class contains static references to all the patch file formats
+ */
 public class PatchFileFormats {
 
 	private PatchFileFormats() {
 	}
 
+	/**
+	 * The text-based patch file format
+	 */
 	public static final TextPatchFileFormat TEXT = new TextPatchFileFormat();
+	/**
+	 * The binary patch file format
+	 */
 	public static final BinaryPatchFileFormat BINARY = new BinaryPatchFileFormat();
 
 	private static final IPatchFileFormat[] FORMATS = { TEXT, BINARY };
@@ -20,6 +29,9 @@ public class PatchFileFormats {
 		}
 	}
 
+	/**
+	 * Gets a patch file format by its name
+	 */
 	public static IPatchFileFormat byName(String name) {
 		return FORMATS_BY_NAME.get(name);
 	}

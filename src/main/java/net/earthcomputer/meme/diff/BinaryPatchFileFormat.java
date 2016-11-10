@@ -11,6 +11,9 @@ import java.util.List;
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
+/**
+ * The binary patch file format
+ */
 public class BinaryPatchFileFormat implements IPatchFileFormat {
 
 	// @formatter:off

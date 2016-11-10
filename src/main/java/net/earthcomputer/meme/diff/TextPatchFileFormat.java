@@ -13,6 +13,9 @@ import java.util.regex.Pattern;
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
+/**
+ * The text-based patch file format
+ */
 public class TextPatchFileFormat implements IPatchFileFormat {
 
 	public static final int VERSION = 0;

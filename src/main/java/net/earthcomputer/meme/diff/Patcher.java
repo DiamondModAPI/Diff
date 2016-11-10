@@ -11,6 +11,9 @@ import net.earthcomputer.meme.diff.IPatchFileFormat.PatchInfo;
 import net.earthcomputer.meme.diff.Patch.Addition;
 import net.earthcomputer.meme.diff.Patch.Deletion;
 
+/**
+ * Used to patch a base file with a patch file
+ */
 public class Patcher<T> {
 
 	public static void main(String[] args) {
@@ -72,6 +75,9 @@ public class Patcher<T> {
 		this.output = output;
 	}
 
+	/**
+	 * Computes the work file and writes it
+	 */
 	public void writeWorkFile() {
 		List<T> workLines = computeWorkFile();
 
@@ -85,6 +91,9 @@ public class Patcher<T> {
 		}
 	}
 
+	/**
+	 * Computes the work file and returns it
+	 */
 	public List<T> computeWorkFile() {
 		List<T> workLines = new ArrayList<T>(baseLines);
 
