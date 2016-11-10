@@ -81,7 +81,7 @@ The Java diff format uses Java tokens, comments, whitespace and newlines as its 
 * Words with [regex](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html) `[\w_\$]+`, such as `HelloWorld` and `containsLetters_andNumbers123`
 * Multi-character Java operators such as `&&`, `||`, `+=`, `<<`, `>>>=`, etc.
 * Single-character Java operators such as `.`, `;`, `+`, `(`, `>`, etc.
-* Whitespace (matching the pattern `\w+`), e.g. `   `
+* Whitespace (matching the pattern `\s+`), e.g. `   `
 * Newline `\n`, `\r` or `\r\n`
 
 Lines are serialized and deserialized as literal strings of `utf8` type in the binary patch file format.
