@@ -7,11 +7,50 @@ buildscript {
 	
 	dependencies {
 		classpath 'commons-io:commons-io:2.4'
+		classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2'
 	}
 }
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+configurations {
+	normalConfiguration
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+artifacts {
+	sourcesJar
+}
+
+publishing {
+	publications {
+		normalPublication(MavenPublication) {
+			artifactId 'diff'
+			from components.java
+			artifact sourcesJar
+		}
+	}
+}
+
+bintray {
+	user = bintrayUser
+	key = bintrayKey
+	dryRun = false
+	publish = false
+	pkg {
+		repo = 'meme'
+		name = 'diff'
+			configurations = ['normalConfiguration']
+			publications = ['normalPublication']
+	}
+}
 
 final int NUMBER_OF_TESTS = 3
 
@@ -77,7 +116,34 @@ for (int i = 1; i <= NUMBER_OF_TESTS; i++) {
 
 archivesBaseName = 'memediff'
 group = 'net.earthcomputer.meme'
-version = '1.0'
+version = "${versionMajor}.${versionMinor}.${versionRevision}.${versionBuildNumber}"
+
+def bumpVersionNumber(String versionPart) {
+	Properties props = new Properties()
+	File propsFile = file('gradle.properties')
+	props.load(propsFile.newDataInputStream())
+	int nextBuildNum = (((props.getProperty("version${versionPart}")) as BigInteger) + 1)
+	props.setProperty("version${versionPart}", nextBuildNum.toString())
+	props.store(propsFile.newWriter(), null)
+	props.load(propsFile.newDataInputStream())
+}
+
+task bumpBuildNumber << {
+	bumpVersionNumber('BuildNumber')
+}
+build.dependsOn bumpBuildNumber
+
+task bumpRevision << {
+	bumpVersionNumber('Revision')
+}
+
+task bumpMinor << {
+	bumpVersionNumber('Minor')
+}
+
+task bumpMajor << {
+	bumpVersionNumber('Major')
+}
 
 jar {
 	manifest {
