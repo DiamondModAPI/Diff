@@ -3,54 +3,25 @@ import org.apache.commons.io.FileUtils
 buildscript {
 	repositories {
 		jcenter()
+		maven { url 'https://dl.bintray.com/earthcomputer/meme' }
 	}
-	
+
 	dependencies {
 		classpath 'commons-io:commons-io:2.4'
-		classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2'
+		classpath 'net.earthcomputer.meme:meme-gradle:1.0.0.11'
 	}
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven-publish'
+apply plugin: 'net.earthcomputer.meme.general'
 
-configurations {
-	normalConfiguration
+meme {
+	artifactId = 'diff'
+	bintrayPackageName = 'diff'
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = 'sources'
-	from sourceSets.main.allSource
-}
-
-artifacts {
-	sourcesJar
-}
-
-publishing {
-	publications {
-		normalPublication(MavenPublication) {
-			artifactId 'diff'
-			from components.java
-			artifact sourcesJar
-		}
-	}
-}
-
-bintray {
-	user = bintrayUser
-	key = bintrayKey
-	dryRun = false
-	publish = false
-	pkg {
-		repo = 'meme'
-		name = 'diff'
-			configurations = ['normalConfiguration']
-			publications = ['normalPublication']
-	}
-}
+archivesBaseName = 'memediff'
+group = 'net.earthcomputer.meme'
+version = "${versionMajor}.${versionMinor}.${versionRevision}.${versionBuildNumber}"
 
 final int NUMBER_OF_TESTS = 3
 
@@ -63,8 +34,16 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 		if (output.exists()) {
 			output.delete()
 		}
-		
-		List<String> args = [ 'java', '-cp', "${jar.archivePath}", mainClass, "test/${inputFile}${testNumber}.txt", "test/${processFile}${testNumber}.${processFileExt}", "test/${outputFile}${testNumber}.${outputFileExt}" ]
+
+		List<String> args = [
+			'java',
+			'-cp',
+			"${jar.archivePath}",
+			mainClass,
+			"test/${inputFile}${testNumber}.txt",
+			"test/${processFile}${testNumber}.${processFileExt}",
+			"test/${outputFile}${testNumber}.${outputFileExt}"
+		]
 		if (patchFormat != null) {
 			args += patchFormat
 		}
@@ -73,7 +52,7 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 		for (int i = 0; i < argsArray.length; i++) {
 			argsArray[i] = args.get i
 		}
- 		Process process = new ProcessBuilder(argsArray).inheritIO().directory(file('.')).start()
+		Process process = new ProcessBuilder(argsArray).inheritIO().directory(file('.')).start()
 		int exitCode = process.waitFor()
 		if (exitCode != 0) {
 			println "Test failed, process exited with exitcode ${exitCode}"
@@ -88,11 +67,7 @@ def createTestTask(int testNumber, String testName, String mainClass, String inp
 }
 
 def createTestDiffTask(int testNumber, String patchFileFormat) {
-	final String[] PATCH_FORMATS = [
-		"normal",
-		"java",
-		"byte"
-	]
+	final String[] PATCH_FORMATS = ["normal", "java", "byte"]
 	return createTestTask(testNumber, 'Diff', 'net.earthcomputer.meme.diff.DiffFinder', 'base', 'work', 'patchTestOutput', 'patch', PATCH_FORMATS[testNumber - 1], patchFileFormat)
 }
 
@@ -114,39 +89,6 @@ for (int i = 1; i <= NUMBER_OF_TESTS; i++) {
 	testAllPatch.dependsOn createTestPatchTask(i, 'binary')
 }
 
-archivesBaseName = 'memediff'
-group = 'net.earthcomputer.meme'
-version = "${versionMajor}.${versionMinor}.${versionRevision}.${versionBuildNumber}"
-
-def bumpVersionNumber(String versionPart) {
-	Properties props = new Properties()
-	File propsFile = file('gradle.properties')
-	props.load(propsFile.newDataInputStream())
-	int nextBuildNum = (((props.getProperty("version${versionPart}")) as BigInteger) + 1)
-	props.setProperty("version${versionPart}", nextBuildNum.toString())
-	props.store(propsFile.newWriter(), null)
-	props.load(propsFile.newDataInputStream())
-}
-
-task bumpBuildNumber << {
-	bumpVersionNumber('BuildNumber')
-}
-build.dependsOn bumpBuildNumber
-
-task bumpRevision << {
-	bumpVersionNumber('Revision')
-}
-
-task bumpMinor << {
-	bumpVersionNumber('Minor')
-}
-
-task bumpMajor << {
-	bumpVersionNumber('Major')
-}
-
 jar {
-	manifest {
-		attributes 'Main-Class': 'net.earthcomputer.meme.diff.DiffFinder'
-	}
+	manifest { attributes 'Main-Class': 'net.earthcomputer.meme.diff.DiffFinder' }
 }
