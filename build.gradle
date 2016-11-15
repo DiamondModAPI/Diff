@@ -8,7 +8,7 @@ buildscript {
 
 	dependencies {
 		classpath 'commons-io:commons-io:2.4'
-		classpath 'net.earthcomputer.meme:meme-gradle:1.0.0.11'
+		classpath('net.earthcomputer.meme:meme-gradle:1.0.0.11') { exclude module: 'diff' }
 	}
 }
 
